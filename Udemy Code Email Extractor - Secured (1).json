@@ -1,0 +1,406 @@
+{
+  "name": "Udemy Code Email Extractor - Secured",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "udemy-code-form",
+        "formTitle": "Get Your Udemy Access Code",
+        "formDescription": "Fill in your details to receive your Udemy course access code",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "placeholder": "Enter your full name exactly as registered",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Access Code",
+              "placeholder": "Enter your 6-character access code (e.g., UD-A7K3M9)",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "dceb8390-5f9a-43c7-9cd1-3bcb552a4bf6",
+      "name": "Form Trigger",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        208
+      ],
+      "webhookId": "udemy-form-webhook"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1FGHZ16NO8Mi3NNVSybuEHgYWRMGphQeb7QsgNpBf9PI",
+          "mode": "list",
+          "cachedResultName": "Check User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FGHZ16NO8Mi3NNVSybuEHgYWRMGphQeb7QsgNpBf9PI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FGHZ16NO8Mi3NNVSybuEHgYWRMGphQeb7QsgNpBf9PI/edit#gid=0"
+        },
+        "combineFilters": "AND",
+        "options": {}
+      },
+      "id": "6c60bf86-efb9-42e5-b0fe-d55d06a16d14",
+      "name": "Google Sheets - Check User",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        -448,
+        208
+      ],
+      "alwaysOutputData": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "0AF65HhuihhOuxr5",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=Access Denied!\n\nThe name or access code you entered is invalid, already used, or does not match our records.\n\nPlease check:\n- Your name is spelled exactly as registered\n- Your access code is correct\n- Your code hasn't been used before\n\nContact support if you need assistance.",
+        "options": {
+          "responseCode": 403
+        }
+      },
+      "id": "9ce3f880-5af4-4d43-9c16-a2b48b94f3a0",
+      "name": "Respond - Access Denied",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        144,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 1,
+        "filters": {
+          "q": "subject:(code OR verification OR login) newer_than:1d",
+          "readStatus": "unread"
+        }
+      },
+      "id": "44349a5b-32ae-4fd4-a589-6e32d5a4f3f6",
+      "name": "Gmail - Get Latest Udemy Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [
+        256,
+        144
+      ],
+      "webhookId": "cc29265b-9f97-410e-8d07-7a979ca4fad2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Hz5psDYjZhDl2tVm",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the Udemy code from email body\nconst emailBody = $input.item.json.snippet || $input.item.json.plainText || $input.item.json.body || '';\n\nconsole.log('Searching for Udemy code...');\n\nconst codePattern = /(?:code|Code).*?([0-9]{6})(?!.*expires)/s;\nlet udemyCode = 'Code not found';\n\nconst match = emailBody.match(codePattern);\nif (match && match[1]) {\n  udemyCode = match[1];\n  console.log('✅ Found code:', udemyCode);\n}\n\n// Get validation data from previous nodes\nconst validationData = $('Validate User & Code').item.json;\n\nreturn {\n  userName: validationData.fullName,\n  accessCode: validationData.accessCode,\n  rowNumber: validationData.rowNumber,\n  udemyCode: udemyCode,\n  emailSubject: $input.item.json.subject\n};"
+      },
+      "id": "044a1c7f-3155-412f-a8f4-0634a2640696",
+      "name": "Extract Udemy Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1FGHZ16NO8Mi3NNVSybuEHgYWRMGphQeb7QsgNpBf9PI",
+          "mode": "list",
+          "cachedResultName": "Check User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FGHZ16NO8Mi3NNVSybuEHgYWRMGphQeb7QsgNpBf9PI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1FGHZ16NO8Mi3NNVSybuEHgYWRMGphQeb7QsgNpBf9PI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Access Code": "={{ $json.accessCode }}",
+            "Full Name": "={{ $json.userName }}"
+          },
+          "matchingColumns": [
+            "Access Code"
+          ],
+          "schema": [
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Access Code",
+              "displayName": "Access Code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Code Used",
+              "displayName": "Code Used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Date Used",
+              "displayName": "Date Used",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "3ef37cca-4984-41ab-8ed5-f787309343aa",
+      "name": "Google Sheets - Mark Code Used",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        848,
+        144
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "0AF65HhuihhOuxr5",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "=Hello!\n\nYour Udemy Login Code: {{ $('Extract Udemy Code').item.json.udemyCode }}\n\nUse this 6-digit code to log into your Udemy account.\n\nCode expires in 10 minutes - use it now!\n\nCODE: {{ $('Extract Udemy Code').item.json.udemyCode }}\n\nNote: Your access has been marked as used and cannot be reused.",
+        "options": {}
+      },
+      "id": "b1328bdc-b34b-4d1d-8d21-55861ba6c61d",
+      "name": "Respond to Form - Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "72c76d90-4448-48c9-a4c9-e4ff5acd0c5e",
+              "leftValue": "={{ $json.isValid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -48,
+        96
+      ],
+      "id": "28ff87a4-2f7e-4566-bc39-017176ce1484",
+      "name": "If",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get form data\nconst formName = $('Form Trigger').item.json['Full Name'];\nconst formCode = $('Form Trigger').item.json['Access Code'];\n\n// Get ALL users from sheet\nconst allUsers = $input.all();\n\nconsole.log('=== VALIDATION DEBUG ===');\nconsole.log('Form submitted:');\nconsole.log('  Name:', formName);\nconsole.log('  Code:', formCode);\nconsole.log('');\nconsole.log('Total users in sheet:', allUsers.length);\nconsole.log('');\n\n// Find matching user\nlet matchedUser = null;\n\nfor (const user of allUsers) {\n  const sheetName = user.json['Full Name'];\n  const sheetCode = user.json['Access Code'];\n  const codeUsed = user.json['Code Used'];\n  \n  // Clean and normalize\n  const cleanFormName = (formName || '').toLowerCase().trim();\n  const cleanSheetName = (sheetName || '').toLowerCase().trim();\n  const cleanFormCode = (formCode || '').trim().toUpperCase();\n  const cleanSheetCode = (sheetCode || '').trim().toUpperCase();\n  const cleanCodeUsed = (codeUsed || '').toLowerCase().trim();\n  \n  console.log('Checking user:', sheetName);\n  \n  // Check if this user matches ALL criteria\n  const nameMatch = cleanSheetName === cleanFormName;\n  const codeMatch = cleanSheetCode === cleanFormCode;\n  const notUsed = cleanCodeUsed === 'no';\n  \n  if (nameMatch && codeMatch && notUsed) {\n    console.log('  ✅ MATCH FOUND!');\n    matchedUser = user.json;\n    break;\n  } else {\n    if (nameMatch) console.log('  Name matches but...');\n    if (!codeMatch && nameMatch) console.log('    ❌ Code mismatch');\n    if (!notUsed && nameMatch) console.log('    ❌ Code already used');\n  }\n}\n\nconsole.log('');\n\nif (matchedUser) {\n  console.log('✅ VALIDATION PASSED');\n  return {\n    isValid: true,\n    fullName: matchedUser['Full Name'],\n    accessCode: matchedUser['Access Code'],\n    rowNumber: matchedUser['row_number']\n  };\n} else {\n  console.log('❌ VALIDATION FAILED');\n  return {\n    isValid: false,\n    reason: 'Invalid credentials or access code already used'\n  };\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        208
+      ],
+      "id": "82d6b641-a7c4-4b12-8261-81fb0ec87131",
+      "name": "Validate User & Code",
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Form Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Check User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Check User": {
+      "main": [
+        [
+          {
+            "node": "Validate User & Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail - Get Latest Udemy Email": {
+      "main": [
+        [
+          {
+            "node": "Extract Udemy Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Udemy Code": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Mark Code Used",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Mark Code Used": {
+      "main": [
+        [
+          {
+            "node": "Respond to Form - Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Gmail - Get Latest Udemy Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond - Access Denied",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate User & Code": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond - Access Denied",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e24439e8-24a6-4c07-a869-ae23f9998fb2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3f1530bbb070a5f62a3660cccf9ac589bea24f691ed00838512f259ed2005e91"
+  },
+  "id": "7m4KqyPAkSG75m7c",
+  "tags": [
+    {
+      "updatedAt": "2025-11-14T19:05:57.030Z",
+      "createdAt": "2025-11-14T19:05:57.030Z",
+      "id": "7J0a9L6caal6q3oV",
+      "name": "udemy"
+    },
+    {
+      "updatedAt": "2025-11-14T20:09:17.945Z",
+      "createdAt": "2025-11-14T20:09:17.945Z",
+      "id": "qVcxKnXnPt0nV950",
+      "name": "secured"
+    }
+  ]
+}
